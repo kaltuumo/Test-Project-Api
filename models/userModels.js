@@ -30,6 +30,26 @@ const UserSchema = mongoose.Schema(
 			minLength: [7, 'Phone number must be at least 7 digits!'],
 			maxLength: [15, 'Phone number cannot be more than 15 digits!'],
 		},
+		userCode: {
+			type: String,
+			unique: true,
+		},
+
+		role: {
+      type: String,
+      enum: ['Admin', 'Manager', 'User'], // only these allowed
+      default: 'Admin', // default is normal user
+      required: true,
+    },
+
+	status: {
+      type: String,
+      enum: ['Active', 'Inactive', 'Banned'], // only these allowed
+      default: 'Active', // default is normal user
+      required: true,
+    },
+
+  
     },
     { timestamps: true }
 );

@@ -7,13 +7,25 @@ const {userLoginSchema} = require("../middlewares/validator");
 const { doHashValidation } = require("../utils/hashing");
 
 exports.signup = async (req, res) => {
-    const { fullname, email, password, phone } = req.body;
+    const { fullname, email, password, phone, role , status} = req.body;
 
     try {
-        const { error } = userSignupSchema.validate({ fullname, email, password, phone });
+        const { error } = userSignupSchema.validate({ fullname, email, password, phone, role, status });
         if (error) {
             return res.status(401).json({ success: false, message: error.details[0].message });
         }
+// Generate new B-code
+const lastUser = await User.findOne().sort({ createdAt: -1 });
+
+let newCode = "B001";
+
+if (lastUser && lastUser.userCode) {
+    let lastNumber = parseInt(lastUser.userCode.replace("B", ""), 10);
+    let nextNumber = lastNumber + 1;
+
+    // Format 001, 002, 003...
+    newCode = "B" + String(nextNumber).padStart(3, '0');
+}
 
         // Check if admin already exists
         const existingUser = await User.findOne({ email });
@@ -30,6 +42,9 @@ exports.signup = async (req, res) => {
             email,
             password: hashedPassword,
             phone,
+            role,
+            status,
+            userCode: newCode,   // <-- Waa IN lagu daro!
         });
 
         // Save admin to the database
@@ -72,6 +87,9 @@ exports.signup = async (req, res) => {
                 fullname: savedUser.fullname,
                 email: savedUser.email,
                 phone: savedUser.phone,
+                role: savedUser.role,
+                status: savedUser.status,
+                userCode: savedUser.userCode,
                 createdDate,
                 createdTime,
                 updateDate,
@@ -187,7 +205,11 @@ exports.getUser = async (req, res) => {
                 userId: user._id,
                 fullname: user.fullname,
                 email: user.email,
+                password: user.password,
                 phone: user.phone,
+                role: user.role,
+                status: user.status,
+                userCode: user.userCode,
                 createdDate,
                 createdTime,
                 updateDate,
@@ -207,58 +229,63 @@ exports.getUser = async (req, res) => {
 };
 
 
-// exports.updateAdmin = async (req, res) => {
-//     const { fullname, email, password, phone } = req.body;
-//     const adminId = req.params.id;  // Get the admin ID from the route parameter
+exports.updateUser = async (req, res) => {
+    const { fullname, email, password, phone , role, status} = req.body;
+    const userId = req.params.id;  // Get the admin ID from the route parameter
 
-//     try {
-//         // Find the admin by ID
-//         const existingAdmin = await Admin.findById(adminId);
-//         if (!existingAdmin) {
-//             return res.status(404).json({ success: false, message: 'Admin not found' });
-//         }
+    try {
+        // Find the admin by ID
+        const existingUser = await User.findById(userId);
+        if (!existingUser) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
 
-//         // Update admin details
-//         if (fullname) existingAdmin.fullname = fullname;
-//         if (email) existingAdmin.email = email;
-//         if (password) existingAdmin.password = await doHash(password, 12);
-//         if (phone) existingAdmin.phone = phone;
+        // Update admin details
+        if (fullname) existingUser.fullname = fullname;
+        if (email) existingUser.email = email;
+        if (password) existingUser.password = await doHash(password, 12);
+        if (phone) existingUser.phone = phone;
+        if (role) existingUser.role = role;
+        if (status) existingUser.status = status;
 
-//         // Save the updated admin
-//         const updatedAdmin = await existingAdmin.save();
+        // Save the updated admin
+        const updatedUser = await existingUser.save();
 
-//         // Format the updated date and time for Somalia timezone (UTC+3)
-//         const updatedAtObj = new Date(updatedAdmin.updatedAt);
+        // Format the updated date and time for Somalia timezone (UTC+3)
+        const updatedAtObj = new Date(updatedUser.updatedAt);
 
-//         const updateDate = new Intl.DateTimeFormat('en-CA', {
-//             timeZone: 'Africa/Mogadishu',
-//         }).format(updatedAtObj); // "YYYY-MM-DD"
+        const updateDate = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Africa/Mogadishu',
+        }).format(updatedAtObj); // "YYYY-MM-DD"
 
-//         const updateTime = new Intl.DateTimeFormat('en-GB', {
-//             timeZone: 'Africa/Mogadishu',
-//             hour: '2-digit',
-//             minute: '2-digit',
-//             second: '2-digit',
-//             hour12: false,
-//         }).format(updatedAtObj); // "HH:MM:SS"
+        const updateTime = new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'Africa/Mogadishu',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
+        }).format(updatedAtObj); // "HH:MM:SS"
 
-//         res.status(200).json({
-//             success: true,
-//             message: 'Admin updated successfully',
-//             result: {
-//                 _id: updatedAdmin._id,
-//                 fullname: updatedAdmin.fullname,
-//                 email: updatedAdmin.email,
-//                 phone: updatedAdmin.phone,
-//                 updateDate,
-//                 updateTime,
-//             },
-//         });
-//     } catch (err) {
-//         console.log(err);
-//         res.status(500).json({ success: false, message: 'Error updating admin' });
-//     }
-// };
+        res.status(200).json({
+            success: true,
+            message: 'Admin updated successfully',
+            result: {
+                _id: updatedUser._id,
+                fullname: updatedUser.fullname,
+                email: updatedUser.email,
+                phone: updatedUser.phone,
+                role: updatedUser.role,
+                status: updatedUser.status,
+                updateDate,
+                updateTime,
+            },
+        });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ success: false, message: 'Error Updating User' });
+    }
+};
+
 
 exports.deleteUser = async (req, res) => {
     const userId = req.params.id;  // Get the 'id' from the URL parameter

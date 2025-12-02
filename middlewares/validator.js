@@ -1,6 +1,5 @@
 const joi = require('joi');
 const mongoose = require('mongoose');
-
 exports.userSignupSchema = joi.object({
     fullname: joi.string()
         .min(3)
@@ -17,13 +16,22 @@ exports.userSignupSchema = joi.object({
         .required()
         .email({ tlds: { allow: ['com', 'net'] } }),
 
-    // Password: only numbers allowed
     password: joi.string()
         .min(6)
         .max(100)
         .required()
-        .pattern(new RegExp('^[0-9]{6,100}$')) // Only numeric characters
+        .pattern(new RegExp('^[0-9]{6,100}$')),
+
+    // 🔥 ROLE FIELD ADDED
+    role: joi.string()
+        .valid("Admin", "Manager", "User")
+        .required() ,  // Haddii aad rabto optional iga sii sheeg
+
+    status: joi.string()
+        .valid("Active", "Inactive", "Banned")
+        .required()   // Haddii aad rabto optional iga sii sheeg
 });
+
 
 exports.userLoginSchema = joi.object({
     email: joi.string()
@@ -55,10 +63,10 @@ exports.customerSignupSchema = joi.object({
 
 });
 
-// exports.zoneSignupSchema = joi.object({
-//   zone: joi.string().min(1).max(100).required(),
-//   description: joi.string().min(1).max(500).required(),
-// });
+exports.zoneSignupSchema = joi.object({
+  zone: joi.string().min(1).max(100).required(),
+  description: joi.string().min(1).max(500).required(),
+});
 
 // exports.areaSignupSchema = joi.object({
 //   areaName: joi.string().min(1).max(100).required(),

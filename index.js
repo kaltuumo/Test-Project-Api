@@ -5,7 +5,7 @@ const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 const userRouter = require('./routes/userRout');
 const customerRouter = require('./routes/customerRoute'); // Import the student router
-// const zoneRouter = require('./routes/zoneRout');
+const zoneRouter = require('./routes/zoneRoute');
 // const areaRouter = require('./routes/areaRoute');
 // const houseRouter = require('./routes/houseRoute');
 // const invoiceRouter = require('./routes/invoiceRoute');
@@ -28,7 +28,7 @@ mongoose.connect(process.env.MONGO_URI).then(() => {
 
 app.use('/api/user', userRouter);
 app.use('/api/customer', customerRouter); 
-// app.use('/api/zone', zoneRouter);
+app.use('/api/zone', zoneRouter);
 // app.use('/api/area', areaRouter);
 // app.use('/api/house', houseRouter);
 // app.use('/api/invoice', invoiceRouter);
